@@ -11,6 +11,7 @@
 
 #define MSB(word) (((word) & 0xff00) >> 8)
 #define LSB(word) ((word) & 0xff)
+#define MAKEWORD(high, low) ((uint16_t) LSB(high) << 8) | ((uint16_t) LSB(low))
 
 static void fx2_usb_config();
 
@@ -38,21 +39,19 @@ int main() {
 
   EA = 1; // enable interrupts
 
+  EP_CDC_HOST2DEV(BCH) = 0;
+  EP_CDC_HOST2DEV(BCL) = 0;
+
+  SYNCDELAY; FIFORESET = _NAKALL;
+  SYNCDELAY; FIFORESET = USB_CFG_EP_CDC_HOST2DEV;
+  SYNCDELAY; FIFORESET = 0;
+
   while (1) {
     // slave fifos configured in auto mode
 
+    uint16_t length = MAKEWORD(EP_CDC_HOST2DEV(BCH), EP_CDC_HOST2DEV(BCL));
+    cdc_printf("EPxCS = 0x%02x, length = 0x%04x\r\n", EP_CDC_HOST2DEV(CS), length);
     delay_ms(100);
-
-      // cdc_printf("EP2468CS = 0x%02x\r\n", EP2468STAT);
-      cdc_printf("EP2CS = 0x%02x\r\n", EP2CS);
-    delay_ms(100);
-      cdc_printf(" EP4CS = 0x%02x\r\n", EP4CS);
-    delay_ms(100);
-      cdc_printf("  EP6CS = 0x%02x\r\n", EP6CS);
-    delay_ms(100);
-      cdc_printf("   EP8CS = 0x%02x\r\n", EP8CS);
-    delay_ms(100);
-
 
   }
 }
