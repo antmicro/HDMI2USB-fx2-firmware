@@ -46,13 +46,21 @@ int main() {
   SYNCDELAY; FIFORESET = USB_CFG_EP_CDC_HOST2DEV;
   SYNCDELAY; FIFORESET = 0;
 
+  uint8_t cnt = 0;
+
   while (1) {
     // slave fifos configured in auto mode
-
-    uint16_t length = MAKEWORD(EP_CDC_HOST2DEV(BCH), EP_CDC_HOST2DEV(BCL));
-    cdc_printf("EPxCS = 0x%02x, length = 0x%04x\r\n", EP_CDC_HOST2DEV(CS), length);
-    delay_ms(100);
-
+    if (!(EP_CDC_HOST2DEV(CS) & _EMPTY)) {
+      cnt++;
+      if(cnt > 5){
+        cnt = 0;
+        uint16_t length = MAKEWORD(EP_CDC_HOST2DEV(BCH), EP_CDC_HOST2DEV(BCL));
+        cdc_printf("EPxCS = 0x%02x, length = 0x%04x\r\n", EP_CDC_HOST2DEV(CS), length);
+      }
+      SYNCDELAY;
+      OUTPKTEND = USB_CFG_EP_CDC_HOST2DEV;
+      SYNCDELAY;
+    }
   }
 }
 
@@ -141,8 +149,9 @@ void fx2_usb_config() {
   // core needs to see AUTOOUT 0 to 1 transition to arm endpoints
   SYNCDELAY; EP_CDC_HOST2DEV(FIFOCFG) = 0;
 
+
   // configure auto mode for endpoints
-  SYNCDELAY; EP_CDC_HOST2DEV(FIFOCFG) = _AUTOOUT;
+  //SYNCDELAY; EP_CDC_HOST2DEV(FIFOCFG) = _AUTOOUT;
   // SYNCDELAY; EP_CDC_DEV2HOST(FIFOCFG) = _AUTOIN|_ZEROLENIN;
   SYNCDELAY; EP_CDC_DEV2HOST(FIFOCFG) = 0;
   SYNCDELAY; EP_UVC(FIFOCFG) = _AUTOIN|_ZEROLENIN;
